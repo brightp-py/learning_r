@@ -1,0 +1,299 @@
+# Preliminaries
+
+```{r setup}
+library(magrittr)
+library(lubridate)
+library(profvis)
+```
+
+# Hello World
+
+It's time to learn about coding in R!
+
+## 18 Pipes and 19 Functions
+
+```{r}
+rescale01 <- function(x) {
+    rng <- range(x, na.rm = TRUE)
+    (x - rng[1]) / (rng[2] - rng[1])
+}
+
+rescale_negative <- function(x) {
+    rng <- range(x, na.rm = TRUE)
+    2 * (x - rng[1]) / (rng[2] - rng[1]) - 1
+}
+
+square <- function(x) {
+    x * x
+}
+
+test <- c(0, 4, 5, 2, Inf)
+
+# rescale_negative(test) %>%
+#     square %>%
+#     rescale01
+rescale01(test)
+```
+
+## 19 Functions Challenge
+
+Write your own functions to compute the variance and skewness of a numeric 
+vector. Variance is defined as 
+
+$Var(x) = \frac{1}{n-1} \Sigma_{i=1}^n (x_i - m)^2$
+
+where $m$ is the sample mean (I'm lazy and don't know how to do the $x$ with a 
+bar). Skewness is defined as 
+
+$Skew(x) = \frac{\frac{1}{n-2} \left(\Sigma_{i=1}{n}(x_i - m)^3\right)}{Var(x)^{3/2}}$
+
+```{r}
+total_mean_diff <- function(x, power) {
+    avg <- mean(x)
+    sum((x - avg) ^ power)
+}
+
+variance <- function(x) {
+    total_mean_diff(x, 2) / (length(x) - 1)
+}
+
+skew <- function(x) {
+    total_mean_diff(x, 3) / ((length(x) - 2) * variance(x) ^ (3 / 2))
+}
+
+test <- c(0, 2, 4, 5, 10)
+
+variance(test)
+
+skew(test)
+```
+
+## 19.3.1 Exercises
+
+```{r}
+starts_with <- function(string, prefix) {
+    substr(string, 1, nchar(prefix)) == prefix
+}
+
+starts_with("asdf", "as")
+starts_with("asdf", "ad")
+
+remove_last <- function(x) {
+    if (length(x) <= 1) return(NULL)
+    x[-length(x)]
+}
+
+remove_last(c(1, 2, 3))
+
+rep_like <- function(x, y) {
+    rep(y, length.out = length(x))
+}
+
+rep_like(c(1, 2, 3), 5)
+```
+
+## 19.4.4 Time exercise
+
+Write a greeting function that says "good morning", "good afternoon", or 
+"good evening" depending on the time of day. You'll want `lubradiate::now()`.
+
+```{r}
+greeting <- function(time = NULL) {
+    if (is.null(time)) time <- lubridate::now()
+    lubridate::hour(time) %>%
+    cut(breaks = c(0, 4, 12, 20, 24),
+        labels = c("evening", "morning", "afternoon", "evening")) %>%
+    stringr::str_c("good ", .)
+}
+
+greeting(now())
+greeting(hm("08:12"))
+greeting(hm("13:12"))
+greeting(hm("23:12"))
+```
+
+## 19.4.4 Exercises
+
+```{r}
+fizzbuzz <- function(x) {
+    stopifnot(length(x) == 1)
+    if (x %% 3 == 0) {
+        if (x %% 5 == 0) return("fizzbuzz")
+        return("fizz")
+    } else if (x %% 5 == 0) {
+        return("buzz")
+    }
+    x
+}
+
+fizzbuzz(9)
+fizzbuzz(c(1, 2))
+fizzbuzz(20)
+fizzbuzz(30)
+fizzbuzz(8)
+
+switch(4,
+    a = 1,
+    b = 2,
+    "s",
+    "t"
+)
+
+temp_feel <- function(temp) {
+    cut(temp, breaks = c(-Inf, 0, 10, 20, 30, Inf),
+        labels = c("freezing", "cold", "cool", "warm", "hot"))
+}
+temp_feel(c(24, 18, -2))
+```
+
+```{r}
+last_value <- function(x) {
+    x[length(x)]
+}
+
+last_value(c(1, 5, 1, 34, 2))
+```
+
+```{r}
+even_pos <- function(x) {
+    if (length(x) < 2) return(NULL)
+    x[seq(2, length(x), by = 2)]
+}
+
+even_pos(c(1, 5, 1, 34, 2))
+```
+
+```{r}
+evens_only <- function(x) {
+    x[x %% 2 == 0] %>%
+        na.omit()
+}
+
+evens_only(c(1, 2, 3, 4, NA))
+```
+
+## 21.2.1 For loop exercises
+
+```{r}
+output <- vector("double", ncol(mtcars))
+for (i in seq_along(mtcars)) {
+    output[[i]] <- mean(mtcars[[i]])
+}
+output
+```
+
+```{r}
+for (i in seq_along(mtcars)) {
+    print(typeof(mtcars[[i]]))
+}
+```
+
+```{r}
+for (i in seq_along(mtcars)) {
+    print(length(mtcars[[i]][!duplicated(mtcars[[i]])]))
+}
+```
+
+```{r}
+for (i in c(-10, 0, 10, 100)) {
+    print(rnorm(1, i))
+}
+```
+
+```{r}
+out <- ""
+for (x in letters) {
+    out <- stringr::str_c(out, x)
+}
+out
+
+paste(letters, collapse = "")
+```
+
+```{r}
+x <- sample(100)
+
+sd <- 0
+for (i in seq_along(x)) {
+    sd <- sd + (x[i] - mean(x)) ^ 2
+}
+sd <- sqrt(sd / (length(x) - 1))
+sd
+
+sqrt(sum((x - mean(x)) ^ 2) / (length(x) - 1))
+
+sd(x)
+```
+
+```{r}
+x <- runif(100)
+
+out <- vector("numeric", length(x))
+out[1] <- x[1]
+for (i in 2:length(x)) {
+    out[i] <- out[i - 1] + x[i]
+}
+out
+
+cumsum(x)
+```
+
+### Evaluating performance
+
+```{r}
+x <- sample(1000, size = 1, replace = TRUE)
+```
+
+```{r}
+f <- function(x) {
+    output <- vector("numeric", length(x))
+    for (i in seq_along(x)) {
+        output[i] <- x[[i]]
+    }
+}
+```
+
+```{r}
+f <- function(x) {
+    output <- vector("numeric", 0)
+    for (i in seq_along(x)) {
+        output <- c(output, x[[i]])
+    }
+}
+```
+
+```{r}
+profvis(f(x))
+```
+
+## 21.3.5 Exercises
+
+```{r}
+out <- vector("list", 0)
+x <- sample(100, 3)
+for (i in seq_along(x)) {
+    out[[i]] <- names(x)[[i]]
+}
+names(x)
+out
+```
+
+```{r}
+files <- dir("data/", pattern = "\\.csv$", full.names = TRUE)
+df <- data.frame()
+for (file in files) {
+    df <- rbind(df, read.csv(file))
+}
+df
+```
+
+```{r}
+library(dplyr)
+files <- dir("data/", pattern = "\\.csv$", full.names = TRUE)
+l <- vector("list", 0)
+for (i in seq_along(files)) {
+    l[[i]] <- read.csv(files[[i]])
+}
+df <- bind_rows(l)
+df
+```
