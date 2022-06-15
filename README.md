@@ -28,3 +28,27 @@ https://rstudio.github.io/profvis/
 
 A tool for measuring performance of R code. Would be useful for functions 
 that need to be run thousands of times, or over very large corpora.
+
+# Getting Started
+
+## Clone this repository
+
+GitHub desktop is the quickest way to get this done.
+
+## Install R for Windows
+
+Go to https://cran.r-project.org/bin/windows/base/ and follow the 
+instructions.
+
+## Install languageserver
+
+Open the R console (you can find this by searching "RGui") and type 
+`install.packages("languageserver")`.
+
+## Install the R extension for Visual Studio Code
+
+Pick the one by "REditorSupport". 
+
+## Install radian
+
+This can be quickly installed with pip: `pip3 install -U radian`.
