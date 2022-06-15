@@ -1,0 +1,100 @@
+# Preliminaries
+
+See https://www.statology.org/ridge-regression-in-r/
+
+```{r setup}
+library(glmnet)
+```
+
+
+# Step 1: Load the data
+
+For this example, we'll use the R built-in dataset called `mtcars`. We'll use 
+`hp` as the response variable and the following variables as the predictors:
+* `mpg`
+* `wt`
+* `drat`
+* `qsec`
+
+To perform ridge regression, we'll use functions from the `glmnet` package. 
+This package requires the response variable to be a vector and the set of 
+predictor variables to be of the class `data.matrix`.
+
+```{r}
+# define response variable
+y <- mtcars$hp
+
+# define matrix of predictor variables
+x <- data.matrix(mtcars[, c("mpg", "wt", "drat", "qsec")])
+```
+
+# Step 2: Fit the Ridge Regression Model
+
+Next, we'll use the `glmnet()` function to fit the ridge regression model and 
+specify `alpha = 0`.
+
+Note that setting `alpha` equal to `1` is equivalent to using Lasso Regression 
+and setting alpha to some value between 0 and 1 is equivalent to using an 
+elastic net.
+
+Also note that ridge regression requires the data to be standardized such that 
+each predictor variable has a mean of `0` and a standard deviation of `1`.
+
+Fortunately, `glmnet()` automatically performs this standardization for you. 
+If you happened to already standardize the variables, you can specify 
+`standard=False`.
+
+```{r}
+# fit ridge regression model
+model <- glmnet(x, y, alpha = 0)
+
+# view summary of model
+summary(model)
+```
+
+# Step 3: Choose an Optimal Value for Lambda
+
+Next, we'll identify the lambda value that produces the lowest test mean 
+squared error (MSE) by using k-fold cross-validation.
+
+Fortunately, `glmnet` has the function `cv.glmnet()` that automatically 
+performs k-fold cross-validation using `k = 10` folds.
+
+```{r}
+# perform k-fold cross-validation to find optimal lambda value
+cv_model <- cv.glmnet(x, y, alpha = 0)
+
+# find optimal lambda value taht minimizes test MSE
+best_lambda <- cv_model$lambda.min
+best_lambda
+
+# produce plot of test MSE by lambda value
+windows();plot(cv_model)
+```
+
+# Step 4: Analyze Final Model
+
+Lastly, we can analyze the final model produced by the optimal lambda value.
+
+We can use the following code to obtain the coefficient estimates for this 
+model:
+
+```{r}
+# find coefficients of best model
+best_model <- glmnet(x, y, alpha = 0, lambda = best_lambda)
+coef(best_model)
+
+# produce Ridge trace plot
+windows();plot(model, xvar = "lambda")
+
+# use fitted best model to make predictions
+y_predicted <- predict(model, s = best_lambda, newx = x)
+
+# find SST and SSE
+sst <- sum((y - mean(y))^2)
+sse <- sum((y_predicted - y)^2)
+
+# find R-Squared
+rsq <- 1 - sse / sst
+rsq
+```
